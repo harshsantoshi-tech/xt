@@ -31,9 +31,9 @@ func TextChangeHandler(c echo.Context) error {
 	}
 
 	completedTag := models.OfferWidgetTag{
-		Title: models.UikitText{
-			Value: "Completed",
-		},
+		//Title: models.UikitText{
+		//	Value: "Completed",
+		//},
 		Style: models.UikitStyle{
 			Color:    color,
 			FontSize: fontSize,
@@ -57,3 +57,43 @@ func TextChangeHandler(c echo.Context) error {
 	// Returns the response as JSON
 	return c.JSON(http.StatusOK, res)
 }
+
+func HomePageHandler(userId int64) (models.HomePage, error) {
+
+	//expenseItems := GetAllExpenseItemsForUser(userId)
+
+	res := models.HomePage{
+		CommonAppBar: models.UikitText{
+			Title: "Xt",
+			TitleStyle: models.UikitStyle{
+				Color:    "#FF0000",
+				FontSize: 16,
+			},
+		},
+		BackgroundColor: "#333333",
+		//ExpenseItems: expenseItems,
+
+	}
+	return res, nil
+
+}
+
+//func GetAllExpenseItemsForUser(userId int64)[]models.ExpenseItem{
+//
+//	items := []string{
+//		"Movie expense",
+//		"Trip expense",
+//	}
+//
+//	var expenseList []models.ExpenseItem
+//
+//	//for _, item := range items {
+//	//	expenseItem := models.ExpenseItem{
+//	//		ItemName: models.UikitText{
+//	//			Value: item,
+//	//		} ,
+//	//	}
+//	//	expenseList = append(expenseList, expenseItem)
+//	//}
+//	return expenseList
+//}

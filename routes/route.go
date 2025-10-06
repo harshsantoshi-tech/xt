@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"expense-tracker/controller"
 	"expense-tracker/handlers"
+	"expense-tracker/middlewares"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -9,12 +11,18 @@ import (
 
 // InitRoutes sets up all the API routes for the application.
 func InitRoutes(e *echo.Echo) {
-	// Middleware
+	// Global middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// Define all GET and POST routes
+	// Public route
 	e.GET("/", handlers.GetRoot)
-	e.GET("/text/change", handlers.TextChangeHandler)
 
+	// Authenticated routes group
+	authGroup := e.Group("/api")
+	authGroup.Use(middlewares.AuthMiddleware) // Apply your custom auth middleware
+
+	// Protected routes
+	e.GET("/home", controller.HomePageController)
+	e.GET("/text/change", handlers.TextChangeHandler)
 }

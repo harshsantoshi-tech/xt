@@ -8,7 +8,8 @@ type OfferWidgetTag struct {
 }
 
 type UikitText struct {
-	Value string `json:"value"`
+	Title      string     `json:"title"`
+	TitleStyle UikitStyle `json:"titleStyle"`
 }
 
 type UikitStyle struct {
@@ -20,6 +21,13 @@ type UikitStyle struct {
 type UikitBackground struct {
 	Color    string  `json:"color"`
 	FontSize float64 `json:"font_size"`
+}
+
+type UikitIcon struct {
+	IconType string  `json:"icon_type"`
+	Url      string  `json:"url"`
+	Height   float64 `json:"height"`
+	Width    float64 `json:"width"`
 }
 
 // Response The model for the complete API response.
@@ -40,4 +48,16 @@ type Greeting struct {
 	Message string `json:"message"`
 	Name    string `json:"name"`
 	Time    string `json:"time"`
+}
+
+// Home Page
+type HomePage struct {
+	CommonAppBar    UikitText     `json:"commonAppBar"`
+	BackgroundColor string        `json:"backgroundColor"`
+	ExpenseItems    []ExpenseItem `json:"expenseItems"`
+}
+
+type ExpenseItem struct {
+	Icon     UikitIcon `json:"icon"`
+	ItemName UikitText `json:"itemName"`
 }
