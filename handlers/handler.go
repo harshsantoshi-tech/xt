@@ -67,7 +67,7 @@ func HomePageHandler(userId int64) (models.HomePage, error) {
 			Title: "Xt",
 			TitleStyle: models.UikitStyle{
 				Color:    "#FF0000",
-				FontSize: 16,
+				FontSize: 18,
 			},
 		},
 		BackgroundColor: "#333333",
