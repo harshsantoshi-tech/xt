@@ -125,6 +125,30 @@ func GetChatListPayload() models.ChatResponse {
 			},
 			UnreadCount: 0,
 		},
+		{
+			Contact: models.Contact{
+				ID:        15,
+				FirstName: "Harsh",
+				FullName:  "Santoshi",
+				Phone:     "+917037306853",
+			},
+			Status:   "CLOSED",
+			Platform: "WHATSAPP",
+			Assignment: models.Assignment{
+				AssignedToType: "USER",
+				AssignedToID:   intPtr(6),
+				AssignedToName: "test 2",
+			},
+			LastMessage: models.LastMessage{
+				ID:          340,
+				Preview:     "Production",
+				PreviewType: "text",
+				Timestamp:   "2025-12-27T13:59:58+00:00",
+				Direction:   "INCOMING",
+				IsRead:      true,
+			},
+			UnreadCount: 0,
+		},
 	}
 
 	// 2. Wrap in the top-level envelope
