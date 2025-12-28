@@ -4,7 +4,6 @@ package main
 import (
 	"context"
 	"errors"
-	"expense-tracker/configs"
 	"expense-tracker/routes"
 	"log"
 	"net/http"
@@ -38,12 +37,13 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// Start the server in a goroutine for local development
-	go func() {
-		if err := e.Start(configs.AppConfig.ServerPort); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("Shutting down the server: %v", err)
-		}
-	}()
-
+	port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080" // Default for local testing
+    }
+	if err := e.Start(":" + port); err != nil && !errors.Is(err, http.ErrServerClosed) {
+        log.Fatalf("Shutting down the server: %v", err)
+    }
 	// Graceful Shutdown: Wait for interrupt signal to gracefully shut down the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
