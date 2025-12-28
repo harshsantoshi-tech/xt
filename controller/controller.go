@@ -59,7 +59,13 @@ func WsController(c echo.Context) error {
 		// Dispatch based on Type
 		switch event.Type {
 		case "chat_list":
-			handlers.GetChatListPayload()
+			res := handlers.GetChatListPayload()
+            
+            // FIX: Actually WRITE the JSON back to the Flutter client
+            if err := conn.WriteJSON(res); err != nil {
+                log.Println("Write error:", err)
+                break
+            }
 		default:
 			fmt.Println("Unknown event type:", event.Type)
 		}
