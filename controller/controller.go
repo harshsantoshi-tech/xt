@@ -64,7 +64,6 @@ func WsController(c echo.Context) error {
             // FIX: Actually WRITE the JSON back to the Flutter client
             if err := conn.WriteJSON(res); err != nil {
                 log.Println("Write error:", err)
-                break
             }
 		default:
 			fmt.Println("Unknown event type:", event.Type)
