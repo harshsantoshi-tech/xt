@@ -24,5 +24,6 @@ func InitRoutes(e *echo.Echo) {
 
 	// Protected routes
 	e.GET("/home", controller.HomePageController)
+	e.GET("/ws", controller.WsController)
 	e.GET("/text/change", handlers.TextChangeHandler)
 }
