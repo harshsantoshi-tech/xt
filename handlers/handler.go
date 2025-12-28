@@ -97,3 +97,41 @@ func HomePageHandler(userId int64) (models.HomePage, error) {
 //	//}
 //	return expenseList
 //}
+
+func GetChatListPayload() models.ChatResponse {
+	
+	chats := []models.ChatEntry{
+		{
+			Contact: models.Contact{
+				ID:        12,
+				FirstName: "Vikrant",
+				FullName:  "Vikrant",
+				Phone:     "+917037306853",
+			},
+			Status:   "OPEN",
+			Platform: "WHATSAPP",
+			Assignment: models.Assignment{
+				AssignedToType: "USER",
+				AssignedToID:   intPtr(6),
+				AssignedToName: "test 2",
+			},
+			LastMessage: models.LastMessage{
+				ID:          340,
+				Preview:     "Testingg",
+				PreviewType: "text",
+				Timestamp:   "2025-12-27T13:59:58+00:00",
+				Direction:   "INCOMING",
+				IsRead:      true,
+			},
+			UnreadCount: 0,
+		},
+	}
+
+	// 2. Wrap in the top-level envelope
+	return models.ChatResponse{
+		Type:      "chat_list",
+		Chats:     chats,
+	}
+}
+
+func intPtr(i int) *int { return &i }
