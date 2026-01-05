@@ -25,4 +25,5 @@ func InitRoutes(e *echo.Echo) {
 	e.GET("/home", controller.HomePageController)
 	e.GET("/ws", controller.WsController)
 	e.GET("/text/change", handlers.TextChangeHandler)
+	e.POST("/login",controller.LoginController,middlewares.AuthMiddleware)
 }
