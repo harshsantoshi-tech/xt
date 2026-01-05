@@ -3,8 +3,10 @@ package controller
 import (
 	"encoding/json"
 	"expense-tracker/handlers"
+	"expense-tracker/services"
 	"log"
 	"net/http"
+	"os"
 
 	"fmt"
 
@@ -46,6 +48,11 @@ func WsController(c echo.Context) error {
 	}
 	defer conn.Close()
 
+	token := c.QueryParam("token")
+	secret := os.Getenv("JWT_SECRET")
+	userId, err := services.GetUserIDFromToken(token, secret)
+
+	log.Println("token ",token ," userid " ,userId)
 	fmt.Println("Flutter client connected via Echo!")
 
 	for {
@@ -61,7 +68,6 @@ func WsController(c echo.Context) error {
 		case "chat_list":
 			res := handlers.GetChatListPayload()
             
-            // FIX: Actually WRITE the JSON back to the Flutter client
             if err := conn.WriteJSON(res); err != nil {
                 log.Println("Write error:", err)
             }
