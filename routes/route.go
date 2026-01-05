@@ -21,7 +21,6 @@ func InitRoutes(e *echo.Echo) {
 	// Authenticated routes group
 	authGroup := e.Group("/api")
 	authGroup.Use(middlewares.AuthMiddleware) // Apply your custom auth middleware
-
 	// Protected routes
 	e.GET("/home", controller.HomePageController)
 	e.GET("/ws", controller.WsController)

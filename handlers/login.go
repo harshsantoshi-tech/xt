@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"database/sql"
 	"errors"
-	"expense-tracker/models"
 	"expense-tracker/services"
 	"fmt"
 
@@ -15,24 +13,25 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
-func LoginHandler(email, password string) (models.User, error) {
-	var user models.User
+func LoginHandler(email, password string) (string, error) {
+	// 1. Fetch user from DB
+	user, err := services.GetUserByEmail(email)
 
-	// Fetch user by email
-	user, err := services.GetUserFromEmail(email)
 	if err != nil {
-		// Use errors.Is for proper error comparison
-		if errors.Is(err, sql.ErrNoRows) {
-			return user, ErrUserNotFound
-		}
-		return user, fmt.Errorf("failed to fetch user: %w", err)
+		return "", fmt.Errorf("user not found")
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	// 2. Compare hashed password
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		return user, ErrInvalidCredentials
+		return "", fmt.Errorf("incorrect password")
 	}
 
-	fmt.Printf("User %s (ID %d) logged in successfully\n", user.Email, user.Id)
-	return user, nil
+	// 3. Generate Token
+	token, err := services.GenerateToken(user.Id)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate token")
+	}
+
+	return token, nil
 }
