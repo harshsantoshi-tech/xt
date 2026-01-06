@@ -11,19 +11,25 @@ import (
 
 // InitRoutes sets up all the API routes for the application.
 func InitRoutes(e *echo.Echo) {
-	// Global middleware
+	// 1. Global Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS()) // Added CORS for frontend connectivity
 
-	// Public route
+	// 2. Public Routes (No Auth Required)
 	e.GET("/", handlers.GetRoot)
+	e.POST("/login", controller.LoginController)
 
-	// Authenticated routes group
-	authGroup := e.Group("/api")
-	authGroup.Use(middlewares.AuthMiddleware) // Apply your custom auth middleware
-	// Protected routes
-	e.GET("/home", controller.HomePageController)
-	e.GET("/ws", controller.WsController)
-	e.GET("/text/change", handlers.TextChangeHandler)
-	e.POST("/login",controller.LoginController)
+	// New Signup Flow Routes
+	e.POST("/signup-request", controller.SignupController)      // Steps 1: Email + Pwd -> Send OTP
+	e.POST("/signup-verify", controller.VerifySignupController) // Step 2: Email + OTP -> Create User
+
+	// 3. Protected Routes Group
+	api := e.Group("/api")
+	api.Use(middlewares.AuthMiddleware) // Tokens required for everything below
+	{
+		api.GET("/home", controller.HomePageController)
+		api.GET("/text/change", handlers.TextChangeHandler)
+		api.GET("/ws", controller.WsController)
+	}
 }

@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"errors"
+	"expense-tracker/configs"
 	"expense-tracker/routes"
 	"log"
 	"net/http"
@@ -13,21 +14,10 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 // A global Echo instance to be reused across requests.
 var e *echo.Echo
-
-func init() {
-	// Initialize the Echo server and routes once, when the application starts.
-	e = echo.New()
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-
-	// Register all the API routes
-	routes.InitRoutes(e)
-}
 
 // Handler is the Vercel-compatible entry point for your serverless function.
 // It simply serves the incoming request using the global Echo instance.
@@ -35,15 +25,30 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	e.ServeHTTP(w, r)
 }
 
+func setupServer() {
+	e = echo.New()
+
+	// Explicitly call config initializers
+	configs.InitializeConfigs()
+
+	// Now that AppConfig.DB and AppConfig.Redis are set,
+	// we can safely register routes.
+	routes.InitRoutes(e)
+}
+
 func main() {
+	setupServer()
 	// Start the server in a goroutine for local development
 	port := os.Getenv("PORT")
-    if port == "" {
-        port = "8080" // Default for local testing
-    }
-	if err := e.Start(":" + port); err != nil && !errors.Is(err, http.ErrServerClosed) {
-        log.Fatalf("Shutting down the server: %v", err)
-    }
+	if port == "" {
+		port = "8080" // Default for local testing
+	}
+	// Start server
+	go func() {
+		if err := e.Start(":" + port); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Shutting down the server: %v", err)
+		}
+	}()
 	// Graceful Shutdown: Wait for interrupt signal to gracefully shut down the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
