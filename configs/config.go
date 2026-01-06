@@ -1,12 +1,14 @@
 package configs
 
 import (
+	"context" // Required for Redis
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
+	"github.com/go-redis/redis/v8" // Import Redis
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 )
@@ -14,23 +16,21 @@ import (
 var AppConfig struct {
 	ServerPort string
 	DB         *sql.DB
+	Redis      *redis.Client // Added Redis Client
 }
 
-func init() {
-	// Load environment variables
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("⚠️ No .env file found, using system environment variables")
+var ctx = context.Background()
+
+func InitializeConfigs() {
+	// 1. Load Env
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found")
 	}
 
-	// Set application-wide configurations
-	AppConfig = struct {
-		ServerPort string
-		DB         *sql.DB
-	}{
-		ServerPort: getPort(),
-		DB:         ConnectDB(),
-	}
+	AppConfig.ServerPort = getPort()
+	AppConfig.DB = ConnectDB()
+
+	AppConfig.Redis = ConnectRedis()
 }
 
 func getPort() string {
@@ -51,11 +51,11 @@ func ConnectDB() *sql.DB {
 	if dbUser == "" || dbPass == "" || dbHost == "" || dbPort == "" || dbName == "" {
 		log.Fatal("❌ Database environment variables not fully set")
 	}
-	
+
 	// DSN format: user:password@tcp(host:port)/dbname
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&tls=true",
-        dbUser, dbPass, dbHost, dbPort, dbName,
-    )
+		dbUser, dbPass, dbHost, dbPort, dbName,
+	)
 
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
@@ -63,8 +63,8 @@ func ConnectDB() *sql.DB {
 	}
 
 	db.SetMaxOpenConns(20)
-    db.SetMaxIdleConns(10)
-    db.SetConnMaxLifetime(time.Minute * 3)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(time.Minute * 3)
 
 	if err = db.Ping(); err != nil {
 		log.Fatalf("❌ DB not reachable: %v", err)
@@ -72,4 +72,32 @@ func ConnectDB() *sql.DB {
 
 	fmt.Println("✅ Database connected")
 	return db
+}
+
+// ConnectRedis sets up the Redis connection
+func ConnectRedis() *redis.Client {
+	redisHost := os.Getenv("REDIS_HOST")
+	redisPort := os.Getenv("REDIS_PORT")
+	redisPass := os.Getenv("REDIS_PASSWORD")
+
+	if redisHost == "" || redisPort == "" {
+		log.Println("⚠️ Redis environment variables not set, defaulting to localhost:6379")
+		redisHost = "localhost"
+		redisPort = "6379"
+	}
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%s", redisHost, redisPort),
+		Password: redisPass,
+		DB:       0,
+	})
+
+	// Ping Redis to check if it's reachable
+	_, err := rdb.Ping(ctx).Result()
+	if err != nil {
+		log.Fatalf("❌ Redis not reachable: %v", err)
+	}
+
+	fmt.Println("✅ Redis connected")
+	return rdb
 }
