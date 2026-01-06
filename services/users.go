@@ -6,6 +6,7 @@ import (
 	"expense-tracker/configs"
 	"expense-tracker/models"
 	"fmt"
+	"github.com/labstack/gommon/log"
 
 	"github.com/golang-jwt/jwt/v5"
 	
@@ -26,6 +27,7 @@ func GetUserByEmail(email string) (*models.User, error) {
 	)
 
 	if err != nil {
+		log.Error("GetUserByEmail ", err.Error())
 		if err == sql.ErrNoRows {
 			return nil, err
 		}

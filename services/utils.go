@@ -2,6 +2,7 @@ package services
 
 import (
 	"expense-tracker/models"
+	"github.com/labstack/gommon/log"
 	"os"
 	"time"
 
@@ -30,6 +31,8 @@ func GenerateToken(userID int64) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	log.Info("Generate token successfully ", tokenString)
 
 	return tokenString, nil
 }
