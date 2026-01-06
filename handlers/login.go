@@ -4,6 +4,7 @@ import (
 	"errors"
 	"expense-tracker/services"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -20,14 +21,10 @@ func LoginHandler(email, password string) (string, error) {
 	}
 
 	// 2. Compare hashed password
-	//update later
-	if user.PasswordHash != password {
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	if err != nil {
 		return "", fmt.Errorf("incorrect password")
 	}
-	//err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
-	//if err != nil {
-	//	return "", fmt.Errorf("incorrect password")
-	//}
 
 	// 3. Generate Token
 	token, err := services.GenerateToken(user.Id)

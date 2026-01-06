@@ -9,20 +9,17 @@ import (
 	"github.com/labstack/gommon/log"
 
 	"github.com/golang-jwt/jwt/v5"
-	
 )
-
-var DB = configs.AppConfig.DB
 
 func GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
 
 	query := `SELECT id, username, email, password_hash FROM users WHERE email = ? LIMIT 1`
 
-	err := DB.QueryRow(query, email).Scan(
-		&user.Id, 
-		&user.Username, 
-		&user.Email, 
+	err := configs.AppConfig.DB.QueryRow(query, email).Scan(
+		&user.Id,
+		&user.Username,
+		&user.Email,
 		&user.PasswordHash,
 	)
 
