@@ -21,8 +21,13 @@ func InitRoutes(e *echo.Echo) {
 	e.POST("/login", controller.LoginController)
 
 	// New Signup Flow Routes
-	e.POST("/signup-request", controller.SignupController)      // Steps 1: Email + Pwd -> Send OTP
-	e.POST("/signup-verify", controller.VerifySignupController) // Step 2: Email + OTP -> Create User
+	e.POST("/signup-request", controller.SignupController)
+	e.POST("/signup-verify", controller.VerifySignupController)
+
+	//Forgot password
+	e.POST("/forgot-password", controller.ForgotPasswordController)
+	e.POST("/verify-otp", controller.VerifyResetOTPController)
+	e.POST("/reset-password", controller.ResetPasswordController)
 
 	// 3. Protected Routes Group
 	api := e.Group("/api")

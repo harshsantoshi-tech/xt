@@ -2,9 +2,13 @@ package handlers
 
 import (
 	"errors"
+	"expense-tracker/configs"
+	"expense-tracker/models"
 	"expense-tracker/services"
+	"expense-tracker/services/redis"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
+	"math/rand"
 )
 
 var (
@@ -33,4 +37,43 @@ func LoginHandler(email, password string) (string, error) {
 	}
 
 	return token, nil
+}
+
+// ForgotPasswordHandler sends OTP if user exists
+func ForgotPasswordHandler(email string) error {
+
+	_, err := services.GetUserByEmail(email)
+	if err != nil {
+		return errors.New("if this email is registered, an OTP has been sent")
+	}
+
+	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
+
+	pending := models.PendingUser{OTP: otp}
+	err = redis.SavePendingUser(email, pending)
+	if err != nil {
+		return err
+	}
+
+	return services.SendEmail(email, otp, "to reset your password:")
+}
+
+// ResetPasswordHandler updates the password in DB
+func ResetPasswordHandler(email string, newPassword string) error {
+
+	resetAllowed, err := redis.GetRedis(fmt.Sprintf(redis.RESET_ALLOWED, email))
+	if resetAllowed != "true" {
+		return errors.New("unauthorized: please verify OTP first")
+	}
+
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+
+	query := "UPDATE users SET password_hash = ? WHERE email = ?"
+	_, err = configs.AppConfig.DB.Exec(query, string(hashedPassword), email)
+
+	if err == nil {
+		redis.DeleteRedis(fmt.Sprintf(redis.RESET_ALLOWED, email))
+	}
+
+	return err
 }

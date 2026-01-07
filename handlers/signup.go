@@ -5,6 +5,7 @@ import (
 	"expense-tracker/configs"
 	"expense-tracker/models"
 	"expense-tracker/services"
+	"expense-tracker/services/redis"
 	"fmt"
 	"time"
 
@@ -30,19 +31,19 @@ func SendOTPHandler(email string, password string) error {
 		OTP:      otp,
 	}
 
-	err = services.SavePendingUser(email, pendingUser)
+	err = redis.SavePendingUser(email, pendingUser)
 	if err != nil {
 		return fmt.Errorf("failed to save temporary user: %v", err)
 	}
 
 	// 4. Send the OTP via Email
-	return services.SendEmail(email, otp)
+	return services.SendEmail(email, otp, "to complete your registration:")
 }
 
 // VerifySignupHandler checks the OTP and moves the user to MySQL
 func VerifySignupHandler(email string, inputOTP string) error {
 	// 1. Retrieve data from Redis via service
-	pending, err := services.GetPendingUser(email)
+	pending, err := redis.GetPendingUser(email)
 	if err != nil {
 		return errors.New("OTP expired or signup not initiated")
 	}
@@ -50,11 +51,11 @@ func VerifySignupHandler(email string, inputOTP string) error {
 	// 2. Check OTP
 	if pending.OTP != inputOTP {
 		// Increment retry count via service
-		count, _ := services.IncrementOTPRetry(email)
+		count, _ := redis.IncrementOTPRetry(email)
 
 		if count >= 3 {
 			// Brute force detected: Wipe the data via service
-			services.ClearSignupData(email)
+			redis.ClearSignupData(email)
 			return errors.New("too many failed attempts, please request a new OTP")
 		}
 
@@ -70,7 +71,7 @@ func VerifySignupHandler(email string, inputOTP string) error {
 	}
 
 	// 4. Cleanup Redis via service
-	services.ClearSignupData(email)
+	redis.ClearSignupData(email)
 
 	return nil
 }

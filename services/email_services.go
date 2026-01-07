@@ -7,7 +7,7 @@ import (
 )
 
 // SendEmail sends a 6-digit OTP to the specified recipient
-func SendEmail(toEmail string, otp string) error {
+func SendEmail(toEmail string, otp string, reason string) error {
 	// 1. Get credentials from environment variables (configs)
 	from := os.Getenv("SMTP_EMAIL")
 	password := os.Getenv("SMTP_PASS")
@@ -22,11 +22,11 @@ func SendEmail(toEmail string, otp string) error {
         <html>
             <body>
                 <h2>Welcome to Expense Tracker!</h2>
-                <p>Please use the following One-Time Password (OTP) to complete your registration:</p>
+                <p>Please use the following One-Time Password (OTP) %s</p>
                 <h1 style="color: #4A90E2; letter-spacing: 5px;">%s</h1>
                 <p>This code is valid for 5 minutes. If you did not request this, please ignore this email.</p>
             </body>
-        </html>`, otp)
+        </html>`, reason, otp)
 
 	message := []byte(subject + mime + body)
 

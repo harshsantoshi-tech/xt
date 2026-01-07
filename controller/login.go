@@ -3,8 +3,11 @@ package controller
 import (
 	"expense-tracker/handlers"
 	"expense-tracker/models"
+	"expense-tracker/services/redis"
+	"fmt"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -83,28 +86,97 @@ func isValidEmail(email string) bool {
 	return re.MatchString(email)
 }
 
-
 func LoginController(c echo.Context) error {
 	var req models.LoginRequest
-	
+
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, models.ResponseModel{
-			Status: "BAD_REQUEST",
-			Message: "",
-			Code :http.StatusBadRequest,
+			Status:  "BAD_REQUEST",
+			Message: "Invalid request",
+			Code:    http.StatusBadRequest,
 		})
 	}
 
 	token, err := handlers.LoginHandler(req.Email, req.Password)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, models.ResponseModel{
-			Status: "UNAUTHORIZE",
-			Message: "",
-			Code :http.StatusUnauthorized,
+			Status:  "UNAUTHORIZE",
+			Message: "Invalid request",
+			Code:    http.StatusUnauthorized,
 		})
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"token": token,
 	})
+}
+
+func ForgotPasswordController(c echo.Context) error {
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, models.ResponseModel{
+			Status:  "BAD_REQUEST",
+			Message: "Invalid request",
+			Code:    http.StatusBadRequest,
+		})
+	}
+
+	handlers.ForgotPasswordHandler(req.Email)
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "OTP sent if account exists"})
+}
+
+func VerifyResetOTPController(c echo.Context) error {
+
+	var req models.VerifyRequest
+
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, models.ResponseModel{
+			Status:  "BAD_REQUEST",
+			Message: "Invalid request",
+			Code:    http.StatusBadRequest,
+		})
+	}
+
+	pending, err := redis.GetPendingUser(req.Email)
+	if err != nil || pending.OTP != req.OTP {
+		return c.JSON(http.StatusBadRequest, models.ResponseModel{
+			Status:  "UNAUTHORIZED",
+			Message: "Invalid OTP",
+			Code:    http.StatusUnauthorized,
+		})
+	}
+
+	redis.SetRedis(fmt.Sprintf(redis.RESET_ALLOWED, req.Email), "true", 10*time.Minute)
+	redis.ClearSignupData(req.Email)
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "OTP verified. You may now reset password."})
+}
+
+func ResetPasswordController(c echo.Context) error {
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, models.ResponseModel{
+			Status:  "BAD_REQUEST",
+			Message: "Invalid request",
+			Code:    http.StatusBadRequest,
+		})
+	}
+
+	err := handlers.ResetPasswordHandler(req.Email, req.Password)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, models.ResponseModel{
+			Status:  "INTERNAL_ERROR",
+			Message: err.Error(),
+			Code:    http.StatusInternalServerError,
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Password updated successfully"})
 }

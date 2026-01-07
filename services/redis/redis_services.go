@@ -1,4 +1,4 @@
-package services
+package redis
 
 import (
 	"context"
@@ -18,13 +18,13 @@ func SavePendingUser(email string, pending models.PendingUser) error {
 		return err
 	}
 
-	key := fmt.Sprintf("pending_user:%s", email)
+	key := fmt.Sprintf(PENDING_USER, email)
 	return configs.AppConfig.Redis.Set(ctx, key, data, 5*time.Minute).Err()
 }
 
 // GetPendingUser retrieves the temporary signup data
 func GetPendingUser(email string) (*models.PendingUser, error) {
-	key := fmt.Sprintf("pending_user:%s", email)
+	key := fmt.Sprintf(PENDING_USER, email)
 	val, err := configs.AppConfig.Redis.Get(ctx, key).Result()
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func GetPendingUser(email string) (*models.PendingUser, error) {
 
 // IncrementOTPRetry tracks failed attempts and returns the current count
 func IncrementOTPRetry(email string) (int64, error) {
-	key := fmt.Sprintf("otp_retries:%s", email)
+	key := fmt.Sprintf(OTP_RETRIES, email)
 
 	// Increment the counter
 	count, err := configs.AppConfig.Redis.Incr(ctx, key).Result()
@@ -58,8 +58,24 @@ func IncrementOTPRetry(email string) (int64, error) {
 
 // ClearSignupData removes all OTP related data from Redis after success or lockout
 func ClearSignupData(email string) {
-	configs.AppConfig.Redis.Del(ctx,
-		fmt.Sprintf("pending_user:%s", email),
-		fmt.Sprintf("otp_retries:%s", email),
-	)
+	configs.AppConfig.Redis.Del(ctx, fmt.Sprintf(PENDING_USER, email), fmt.Sprintf(OTP_RETRIES, email))
+}
+
+// IsResetAuthorized checks if the user has successfully verified their OTP recently
+func IsResetAuthorized(email string) bool {
+	key := fmt.Sprintf(RESET_ALLOWED, email)
+	val, _ := configs.AppConfig.Redis.Get(ctx, key).Result()
+	return val == "true"
+}
+
+func SetRedis(key string, value string, expiration time.Duration) error {
+	return configs.AppConfig.Redis.Set(ctx, key, value, expiration).Err()
+}
+
+func GetRedis(key string) (string, error) {
+	return configs.AppConfig.Redis.Get(ctx, key).Result()
+}
+
+func DeleteRedis(key string) error {
+	return configs.AppConfig.Redis.Del(ctx, key).Err()
 }
