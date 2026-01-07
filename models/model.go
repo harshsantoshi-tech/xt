@@ -36,13 +36,6 @@ type Response struct {
 	Compete  OfferWidgetTag `json:"compete"`
 }
 
-// ResponseModel A generic response model.
-type ResponseModel struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-	Code    int    `json:"code"`
-}
-
 // Greeting A model for the JSON post request.
 type Greeting struct {
 	Message string `json:"message"`

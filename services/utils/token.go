@@ -1,12 +1,11 @@
-package services
+package utils
 
 import (
 	"expense-tracker/models"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/gommon/log"
 	"os"
 	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func GenerateToken(userID int64) (string, error) {
@@ -36,3 +35,4 @@ func GenerateToken(userID int64) (string, error) {
 
 	return tokenString, nil
 }
+

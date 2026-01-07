@@ -6,14 +6,12 @@ import (
 	"expense-tracker/models"
 	"expense-tracker/services"
 	"expense-tracker/services/redis"
+	"expense-tracker/services/sql"
+	"expense-tracker/services/utils"
 	"fmt"
+	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/bcrypt"
 	"math/rand"
-)
-
-var (
-	ErrUserNotFound       = errors.New("user not found")
-	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
 func LoginHandler(email, password string) (string, error) {
@@ -21,6 +19,7 @@ func LoginHandler(email, password string) (string, error) {
 	user, err := services.GetUserByEmail(email)
 
 	if err != nil {
+		log.Error("Error getting user by email: "+err.Error(), " ", email)
 		return "", fmt.Errorf("user not found")
 	}
 
@@ -31,8 +30,9 @@ func LoginHandler(email, password string) (string, error) {
 	}
 
 	// 3. Generate Token
-	token, err := services.GenerateToken(user.Id)
+	token, err := utils.GenerateToken(user.Id)
 	if err != nil {
+		log.Error("Error generating token ", user.Id, " ", err)
 		return "", fmt.Errorf("failed to generate token")
 	}
 
@@ -44,6 +44,7 @@ func ForgotPasswordHandler(email string) error {
 
 	_, err := services.GetUserByEmail(email)
 	if err != nil {
+		log.Error("ForgotPasswordHandler.GetUserByEmail ", email, " ", err)
 		return errors.New("if this email is registered, an OTP has been sent")
 	}
 
@@ -52,6 +53,7 @@ func ForgotPasswordHandler(email string) error {
 	pending := models.PendingUser{OTP: otp}
 	err = redis.SavePendingUser(email, pending)
 	if err != nil {
+		log.Error("Error saving pending user ", err, " ", email)
 		return err
 	}
 
@@ -68,8 +70,7 @@ func ResetPasswordHandler(email string, newPassword string) error {
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 
-	query := "UPDATE users SET password_hash = ? WHERE email = ?"
-	_, err = configs.AppConfig.DB.Exec(query, string(hashedPassword), email)
+	_, err = configs.AppConfig.DB.Exec(sql.UPDATE_PASSWORD_BY_EMAIL, string(hashedPassword), email)
 
 	if err == nil {
 		redis.DeleteRedis(fmt.Sprintf(redis.RESET_ALLOWED, email))

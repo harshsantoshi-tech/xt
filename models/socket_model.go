@@ -1,7 +1,5 @@
 package models
 
-
-
 // ChatResponse is the top-level envelope
 type ChatResponse struct {
 	Type      string      `json:"type"`
@@ -45,4 +43,32 @@ type LastMessage struct {
 	CreatedBy   string `json:"created_by"`
 	ExpiresAt   int64  `json:"expires_at"`
 	IsRead      bool   `json:"is_read"`
+}
+
+type ChatListResponse struct {
+	Type  string      `json:"type"`
+	Chats interface{} `json:"chats"`
+}
+
+type MessageResponse struct {
+	Type    string      `json:"type"`
+	Payload interface{} `json:"payload"`
+}
+
+type ErrorResponse struct {
+	Type  string `json:"type"`
+	Error string `json:"error"`
+}
+
+type SendMessagePayload struct {
+	ChatID  int64  `json:"chat_id"`
+	Message string `json:"message"`
+}
+
+type TypingPayload struct {
+	ChatID int64 `json:"chat_id"`
+}
+
+type ReadReceiptPayload struct {
+	MessageID int64 `json:"message_id"`
 }

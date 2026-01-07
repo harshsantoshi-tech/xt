@@ -31,10 +31,8 @@ func InitRoutes(e *echo.Echo) {
 
 	// 3. Protected Routes Group
 	api := e.Group("/api")
-	api.Use(middlewares.AuthMiddleware) // Tokens required for everything below
+	api.Use(middlewares.AuthMiddleware)
 	{
-		api.GET("/home", controller.HomePageController)
-		api.GET("/text/change", handlers.TextChangeHandler)
 		api.GET("/ws", controller.WsController)
 	}
 }

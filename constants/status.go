@@ -1,0 +1,7 @@
+package constants
+
+const SUCCESS = "SUCCESS"
+const FAILURE = "FAILURE"
+
+const BAD_REQUEST = "BAD_REQUEST"
+const UNAUTHORIZED = "UNAUTHORIZED"

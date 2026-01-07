@@ -1,83 +1,19 @@
 package controller
 
 import (
+	"encoding/json"
+	"expense-tracker/constants"
 	"expense-tracker/handlers"
 	"expense-tracker/models"
 	"expense-tracker/services/redis"
 	"fmt"
+	"github.com/labstack/gommon/log"
 	"net/http"
 	"regexp"
 	"time"
 
 	"github.com/labstack/echo/v4"
 )
-
-// func SignupController(c echo.Context) error {
-// 	req := new(models.LoginRequest)
-// 	if err := c.Bind(req); err != nil {
-// 		return c.JSON(http.StatusBadRequest, echo.Map{
-// 			"error": "Invalid request format",
-// 		})
-// 	}
-
-// 	// Sanitize input
-// 	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
-
-// 	// Basic validation
-// 	if req.Email == "" || req.Password == "" {
-// 		return c.JSON(http.StatusBadRequest, echo.Map{
-// 			"error": "Email and password are required",
-// 		})
-// 	}
-// 	if !isValidEmail(req.Email) {
-// 		return c.JSON(http.StatusBadRequest, echo.Map{
-// 			"error": "Invalid email format",
-// 		})
-// 	}
-// 	if len(req.Password) < 6 {
-// 		return c.JSON(http.StatusBadRequest, echo.Map{
-// 			"error": "Password must be at least 6 characters",
-// 		})
-// 	}
-
-// 	// Check for existing user
-// 	_, err := services.GetUserFromEmail(req.Email)
-// 	if err == nil {
-// 		// User already exists
-// 		return c.JSON(http.StatusConflict, echo.Map{
-// 			"error": "Email already registered",
-// 		})
-// 	}
-
-// 	// Hash the password
-// 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-// 	if err != nil {
-// 		return c.JSON(http.StatusInternalServerError, echo.Map{
-// 			"error": "Failed to hash password",
-// 		})
-// 	}
-
-// 	// Create user
-// 	user := &models.User{
-// 		Email:    req.Email,
-// 		Password: string(hashedPassword),
-// 	}
-// 	if err := services.CreateUser(user); err != nil {
-// 		return c.JSON(http.StatusInternalServerError, echo.Map{
-// 			"error": "Failed to create user",
-// 		})
-// 	}
-
-// 	// Optional: generate token here
-
-// 	return c.JSON(http.StatusCreated, echo.Map{
-// 		"message": "User registered successfully",
-// 		"user": echo.Map{
-// 			"id":    user.Id,
-// 			"email": user.Email,
-// 		},
-// 	})
-// }
 
 // Simple regex email validation
 func isValidEmail(email string) bool {
@@ -90,6 +26,7 @@ func LoginController(c echo.Context) error {
 	var req models.LoginRequest
 
 	if err := c.Bind(&req); err != nil {
+		log.Error("LoginController.Bind ", err.Error())
 		return c.JSON(http.StatusBadRequest, models.ResponseModel{
 			Status:  "BAD_REQUEST",
 			Message: "Invalid request",
@@ -97,8 +34,12 @@ func LoginController(c echo.Context) error {
 		})
 	}
 
+	requestJson, _ := json.Marshal(req)
+	log.Info("/login ", string(requestJson))
+
 	token, err := handlers.LoginHandler(req.Email, req.Password)
 	if err != nil {
+		log.Error("LoginController.LoginHandler ", err.Error())
 		return c.JSON(http.StatusUnauthorized, models.ResponseModel{
 			Status:  "UNAUTHORIZE",
 			Message: "Invalid request",
@@ -106,9 +47,14 @@ func LoginController(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{
-		"token": token,
-	})
+	var response models.LoginResponse
+	response.Token = token
+	response.ResponseModel = models.ResponseModel{
+		Status:  constants.SUCCESS,
+		Message: "Logged in successfully",
+		Code:    http.StatusOK,
+	}
+	return c.JSON(http.StatusOK, response)
 }
 
 func ForgotPasswordController(c echo.Context) error {
@@ -123,9 +69,16 @@ func ForgotPasswordController(c echo.Context) error {
 		})
 	}
 
-	handlers.ForgotPasswordHandler(req.Email)
+	err := handlers.ForgotPasswordHandler(req.Email)
+	if err != nil {
+		log.Error("ForgotPasswordController.ForgotPasswordHandler ", err.Error())
+	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "OTP sent if account exists"})
+	return c.JSON(http.StatusOK, models.ResponseModel{
+		Status:  constants.SUCCESS,
+		Message: "OTP sent if account exists ",
+		Code:    http.StatusOK,
+	})
 }
 
 func VerifyResetOTPController(c echo.Context) error {
@@ -142,6 +95,7 @@ func VerifyResetOTPController(c echo.Context) error {
 
 	pending, err := redis.GetPendingUser(req.Email)
 	if err != nil || pending.OTP != req.OTP {
+		log.Error("VerifyResetOTPController.VerifyResetOTPHandler ", " OTP Mismatch ")
 		return c.JSON(http.StatusBadRequest, models.ResponseModel{
 			Status:  "UNAUTHORIZED",
 			Message: "Invalid OTP",
@@ -152,7 +106,11 @@ func VerifyResetOTPController(c echo.Context) error {
 	redis.SetRedis(fmt.Sprintf(redis.RESET_ALLOWED, req.Email), "true", 10*time.Minute)
 	redis.ClearSignupData(req.Email)
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "OTP verified. You may now reset password."})
+	return c.JSON(http.StatusOK, models.ResponseModel{
+		Status:  constants.SUCCESS,
+		Message: "OTP verified. You may now reset password.",
+		Code:    http.StatusOK,
+	})
 }
 
 func ResetPasswordController(c echo.Context) error {
@@ -172,11 +130,15 @@ func ResetPasswordController(c echo.Context) error {
 	err := handlers.ResetPasswordHandler(req.Email, req.Password)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, models.ResponseModel{
-			Status:  "INTERNAL_ERROR",
+			Status:  constants.FAILURE,
 			Message: err.Error(),
 			Code:    http.StatusInternalServerError,
 		})
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "Password updated successfully"})
+	return c.JSON(http.StatusOK, models.ResponseModel{
+		Status:  constants.SUCCESS,
+		Message: "Password updated successfully",
+		Code:    http.StatusOK,
+	})
 }
