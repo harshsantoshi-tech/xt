@@ -78,3 +78,24 @@ func ResetPasswordHandler(email string, newPassword string) error {
 
 	return err
 }
+
+
+func ResendOTPHandler(email string) error {
+
+	pending, err := redis.GetPendingUser(email)
+	if err != nil {
+		log.Error("ResendOTPHandler.GetPendingUser session expired or not found ", err, " ", email)
+		return fmt.Errorf("session expired or not found, please start again")
+	}
+
+	newOtp := fmt.Sprintf("%06d", rand.Intn(1000000))
+	pending.OTP = newOtp
+
+	err = redis.SavePendingUser(email, *pending)
+	if err != nil {
+		log.Error("ResendOTPHandler.SavePendingUser Error saving pending user ", err, " ", email)
+		return err
+	}
+
+	return services.SendEmail(email, newOtp,"")
+}

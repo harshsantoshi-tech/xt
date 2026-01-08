@@ -27,7 +27,11 @@ func InitRoutes(e *echo.Echo) {
 	//Forgot password
 	e.POST("/forgot-password", controller.ForgotPasswordController)
 	e.POST("/verify-otp", controller.VerifyResetOTPController)
+	e.POST("/resend-otp", controller.ResendOTPController)
 	e.POST("/reset-password", controller.ResetPasswordController)
+
+
+	e.POST("/logout", controller.LogoutController)
 
 	// 3. Protected Routes Group
 	api := e.Group("/api")

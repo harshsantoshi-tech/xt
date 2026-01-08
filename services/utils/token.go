@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"expense-tracker/constants"
 	"expense-tracker/models"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/gommon/log"
@@ -16,7 +17,7 @@ func GenerateToken(userID int64) (string, error) {
 	claims := &models.CustomClaims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(constants.JWT_EXPIRY_TIME)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "xt-chat-app",
 		},

@@ -19,6 +19,14 @@ func SignupController(c echo.Context) error {
 		})
 	}
 
+	if !isValidEmail(req.Email) {
+		return c.JSON(http.StatusBadRequest, models.ResponseModel{
+			Status:  "BAD_REQUEST",
+			Message: "Invalid email format",
+			Code:    http.StatusBadRequest,
+		})
+	}
+
 	err := handlers.SendOTPHandler(req.Email, req.Password)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, models.ResponseModel{
@@ -45,6 +53,13 @@ func VerifySignupController(c echo.Context) error {
 		})
 	}
 
+	if !isValidEmail(req.Email) {
+		return c.JSON(http.StatusBadRequest, models.ResponseModel{
+			Status:  "BAD_REQUEST",
+			Message: "Invalid email format",
+			Code:    http.StatusBadRequest,
+		})
+	}
 	err := handlers.VerifySignupHandler(req.Email, req.OTP)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, models.ResponseModel{

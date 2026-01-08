@@ -1,7 +1,11 @@
 package middlewares
 
 import (
+	"expense-tracker/constants"
+	"expense-tracker/models"
 	"expense-tracker/services"
+	"expense-tracker/services/redis"
+	"fmt"
 	"github.com/labstack/gommon/log"
 	"net/http"
 	"os"
@@ -27,6 +31,16 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		secret := os.Getenv("JWT_SECRET")
 		if secret == "" {
 			return echo.NewHTTPError(http.StatusInternalServerError, "JWT secret not configured")
+		}
+
+		userLoggedOut, err := redis.GetRedis(fmt.Sprintf(redis.USER_LOGOUT, tokenString))
+
+		if err != nil || userLoggedOut == "true" {
+			return c.JSON(http.StatusUnauthorized, models.ResponseModel{
+				Status:  constants.UNAUTHORIZED,
+				Message: "Token has been invalidated. Please login again.",
+				Code:    http.StatusUnauthorized,
+			})
 		}
 
 		userId, err := services.GetUserIDFromToken(tokenString, secret)
