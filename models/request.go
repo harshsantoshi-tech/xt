@@ -7,8 +7,9 @@ type LoginRequest struct {
 
 // SignupRequest is used for the initial email/password submission
 type SignupRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8"`
+	Email           string `json:"email" validate:"required,email"`
+	Password        string `json:"password" validate:"required,min=8"`
+	ConfirmPassword string `json:"confirm_password" validate:"required,min=8"`
 }
 
 // VerifyRequest is used when the user submits the OTP code

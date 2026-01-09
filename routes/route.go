@@ -30,13 +30,11 @@ func InitRoutes(e *echo.Echo) {
 	e.POST("/resend-otp", controller.ResendOTPController)
 	e.POST("/reset-password", controller.ResetPasswordController)
 
-
-	e.POST("/logout", controller.LogoutController)
-
 	// 3. Protected Routes Group
 	api := e.Group("/api")
 	api.Use(middlewares.AuthMiddleware)
 	{
 		api.GET("/ws", controller.WsController)
+		api.POST("/logout", controller.LogoutController)
 	}
 }

@@ -26,6 +26,13 @@ func SignupController(c echo.Context) error {
 			Code:    http.StatusBadRequest,
 		})
 	}
+	if req.Password == "" || req.ConfirmPassword != req.Password {
+		return c.JSON(http.StatusBadRequest, models.ResponseModel{
+			Status:  "BAD_REQUEST",
+			Message: "Invalid request",
+			Code:    http.StatusBadRequest,
+		})
+	}
 
 	err := handlers.SendOTPHandler(req.Email, req.Password)
 	if err != nil {
@@ -60,12 +67,12 @@ func VerifySignupController(c echo.Context) error {
 			Code:    http.StatusBadRequest,
 		})
 	}
-	err := handlers.VerifySignupHandler(req.Email, req.OTP)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, models.ResponseModel{
-			Status:  constants.UNAUTHORIZED,
-			Message: err.Error(),
-			Code:    http.StatusUnauthorized,
+
+	if appErr := handlers.VerifySignupHandler(req.Email, req.OTP); appErr != nil {
+		return c.JSON(appErr.Code, models.ResponseModel{
+			Status:  constants.FAILURE,
+			Message: appErr.Message,
+			Code:    appErr.Code,
 		})
 	}
 
