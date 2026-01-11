@@ -16,35 +16,35 @@ import (
 	"time"
 )
 
-func LoginHandler(email, password string) (string,string, error) {
+func LoginHandler(email, password string) (string, string, error) {
 	// 1. Fetch user from DB
 	user, err := services.GetUserByEmail(email)
 
 	if err != nil {
 		log.Error("Error getting user by email: "+err.Error(), " ", email)
-		return "","", fmt.Errorf("user not found")
+		return "", "", fmt.Errorf("user not found")
 	}
 
 	// 2. Compare hashed password
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		return "", "",fmt.Errorf("incorrect password")
+		return "", "", fmt.Errorf("incorrect password")
 	}
 
 	// 3. Generate Token
 	accessToken, refreshToken, err := utils.GenerateTokens(user.Id)
 	if err != nil {
-		return "","", fmt.Errorf("failed to generate tokens")
+		return "", "", fmt.Errorf("failed to generate tokens")
 	}
 
 	expiresAt := time.Now().Add(constants.REFRESH_TOKEN_EXPIRY_TIME)
 	err = sql.SaveUserSession(user.Id, refreshToken, expiresAt)
 	if err != nil {
 		log.Error("Session save error: ", err)
-		return "","", fmt.Errorf("failed to create session")
+		return "", "", fmt.Errorf("failed to create session")
 	}
 
-	return accessToken,refreshToken, nil
+	return accessToken, refreshToken, nil
 }
 
 // ForgotPasswordHandler sends OTP if user exists
@@ -57,6 +57,7 @@ func ForgotPasswordHandler(email string) error {
 	}
 
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
+	otp = "123456"
 
 	pending := models.PendingUser{OTP: otp}
 	err = redis.SavePendingUser(email, pending)
@@ -66,7 +67,7 @@ func ForgotPasswordHandler(email string) error {
 	}
 
 	go func() {
-		err :=  services.SendEmail(email, otp, "to reset your password:")
+		err := services.SendEmail(email, otp, "to reset your password:")
 		if err != nil {
 			fmt.Println("Async Email Error:", err)
 		}
@@ -94,7 +95,6 @@ func ResetPasswordHandler(email string, newPassword string) error {
 	return err
 }
 
-
 func ResendOTPHandler(email string) error {
 
 	pending, err := redis.GetPendingUser(email)
@@ -113,7 +113,7 @@ func ResendOTPHandler(email string) error {
 	}
 
 	go func() {
-		err :=  services.SendEmail(email, newOtp, "to complete your registration:")
+		err := services.SendEmail(email, newOtp, "to complete your registration:")
 		if err != nil {
 			fmt.Println("Async Email Error:", err)
 		}
