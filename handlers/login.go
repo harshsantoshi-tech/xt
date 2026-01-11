@@ -65,7 +65,14 @@ func ForgotPasswordHandler(email string) error {
 		return err
 	}
 
-	return services.SendEmail(email, otp, "to reset your password:")
+	go func() {
+		err :=  services.SendEmail(email, otp, "to reset your password:")
+		if err != nil {
+			fmt.Println("Async Email Error:", err)
+		}
+	}()
+
+	return nil
 }
 
 // ResetPasswordHandler updates the password in DB
@@ -105,5 +112,12 @@ func ResendOTPHandler(email string) error {
 		return err
 	}
 
-	return services.SendEmail(email, newOtp,"")
+	go func() {
+		err :=  services.SendEmail(email, newOtp, "to complete your registration:")
+		if err != nil {
+			fmt.Println("Async Email Error:", err)
+		}
+	}()
+
+	return nil
 }
