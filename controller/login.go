@@ -50,7 +50,7 @@ func LoginController(c echo.Context) error {
 	requestJson, _ := json.Marshal(req)
 	log.Info("/login ", string(requestJson))
 
-	token, err := handlers.LoginHandler(req.Email, req.Password)
+	accessToken, refreshToken, err := handlers.LoginHandler(req.Email, req.Password)
 	if err != nil {
 		log.Error("LoginController.LoginHandler ", err.Error())
 		return c.JSON(http.StatusUnauthorized, models.ResponseModel{
@@ -61,7 +61,8 @@ func LoginController(c echo.Context) error {
 	}
 
 	var response models.LoginResponse
-	response.Token = token
+	response.AccessToken = accessToken
+	response.RefreshToken = refreshToken
 	response.ResponseModel = models.ResponseModel{
 		Status:  constants.SUCCESS,
 		Message: "Logged in successfully",

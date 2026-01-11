@@ -189,3 +189,17 @@ func GetMessagesByRoom(roomID int64, limit int, offset int) ([]models.ChatMessag
 
 	return messages, nil
 }
+
+func SaveUserSession(userID int64, refreshToken string, expiresAt time.Time) error {
+	query := `
+		INSERT INTO user_sessions (user_id, refresh_token, expires_at) 
+		VALUES (?, ?, ?)
+	`
+
+	_, err := configs.AppConfig.DB.Exec(query, userID, refreshToken, expiresAt)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

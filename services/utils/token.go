@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func GenerateToken(userID int64) (string, error) {
+func GenerateToken(userID int64 ,expiry time.Duration) (string, error) {
 	// 1. Get the secret from environment variables
 	secretKey := os.Getenv("JWT_SECRET")
 
@@ -17,7 +17,7 @@ func GenerateToken(userID int64) (string, error) {
 	claims := &models.CustomClaims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(constants.JWT_EXPIRY_TIME)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiry)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "xt-chat-app",
 		},
@@ -37,3 +37,17 @@ func GenerateToken(userID int64) (string, error) {
 	return tokenString, nil
 }
 
+func GenerateTokens(userID int64 ) (string, string, error) {
+	accessToken, err := GenerateToken(userID ,constants.JWT_EXPIRY_TIME)
+	if err != nil {
+		log.Error("GenerateTokens.GenerateToken "," access token ", userID)
+		return "", "", err
+	}
+
+	refreshToken , err := GenerateToken(userID,constants.REFRESH_TOKEN_EXPIRY_TIME )
+	if err != nil {
+		log.Error("GenerateTokens.GenerateToken "," refresh token ", userID)
+		return "", "", err
+	}
+	return accessToken, refreshToken, err
+}

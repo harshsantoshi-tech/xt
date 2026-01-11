@@ -8,5 +8,6 @@ type ResponseModel struct {
 
 type LoginResponse struct {
 	ResponseModel
-	Token string `json:"token"`
+	AccessToken string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }

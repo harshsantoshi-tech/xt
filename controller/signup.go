@@ -1,31 +1,37 @@
 package controller
 
 import (
+	"encoding/json"
 	"expense-tracker/constants"
 	"expense-tracker/handlers"
 	"expense-tracker/models"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 	"net/http"
 )
 
 func SignupController(c echo.Context) error {
 	var req models.SignupRequest
 
-	if err := c.Bind(&req); err != nil {
+	r := c.Request()
+	body := json.NewDecoder(r.Body)
+	err := body.Decode(&req)
+	if err != nil {
+		return &echo.HTTPError{
+			Code:    http.StatusBadRequest,
+			Message: "BAD_REQUEST",
+		}
+	}
+	requestJ, _ := json.Marshal(req)
+	log.Info("/login ", string(requestJ))
+	if req.Email == "" || req.Password == "" {
 		return c.JSON(http.StatusBadRequest, models.ResponseModel{
 			Status:  "BAD_REQUEST",
-			Message: "Invalid input data",
+			Message: "Email and OTP are required",
 			Code:    http.StatusBadRequest,
 		})
 	}
 
-	if !isValidEmail(req.Email) {
-		return c.JSON(http.StatusBadRequest, models.ResponseModel{
-			Status:  "BAD_REQUEST",
-			Message: "Invalid email format",
-			Code:    http.StatusBadRequest,
-		})
-	}
 	if req.Password == "" || req.ConfirmPassword != req.Password {
 		return c.JSON(http.StatusBadRequest, models.ResponseModel{
 			Status:  "BAD_REQUEST",
@@ -33,8 +39,15 @@ func SignupController(c echo.Context) error {
 			Code:    http.StatusBadRequest,
 		})
 	}
+	if !isValidEmail(req.Email) {
+		return c.JSON(http.StatusBadRequest, models.ResponseModel{
+			Status:  "BAD_REQUEST",
+			Message: "Invalid email format",
+			Code:    http.StatusBadRequest,
+		})
+	}
 
-	err := handlers.SendOTPHandler(req.Email, req.Password)
+	err = handlers.SendOTPHandler(req.Email, req.Password)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, models.ResponseModel{
 			Status:  "INTERNAL_SERVER_ERROR",

@@ -19,25 +19,20 @@ import (
 // A global Echo instance to be reused across requests.
 var e *echo.Echo
 
-// Handler is the Vercel-compatible entry point for your serverless function.
-// It simply serves the incoming request using the global Echo instance.
-func Handler(w http.ResponseWriter, r *http.Request) {
-	e.ServeHTTP(w, r)
-}
+//// Handler is the Vercel-compatible entry point for your serverless function.
+//// It simply serves the incoming request using the global Echo instance.
+//func Handler(w http.ResponseWriter, r *http.Request) {
+//	e.ServeHTTP(w, r)
+//}
 
-func setupServer() {
+
+func init() {
 	e = echo.New()
-
-	// Explicitly call config initializers
 	configs.InitializeConfigs()
-
-	// Now that AppConfig.DB and AppConfig.Redis are set,
-	// we can safely register routes.
 	routes.InitRoutes(e)
 }
 
 func main() {
-	setupServer()
 	// Start the server in a goroutine for local development
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -49,6 +44,7 @@ func main() {
 			log.Fatalf("Shutting down the server: %v", err)
 		}
 	}()
+
 	// Graceful Shutdown: Wait for interrupt signal to gracefully shut down the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)

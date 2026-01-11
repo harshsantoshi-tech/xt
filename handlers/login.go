@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"expense-tracker/configs"
+	"expense-tracker/constants"
 	"expense-tracker/models"
 	"expense-tracker/services"
 	"expense-tracker/services/redis"
@@ -12,31 +13,38 @@ import (
 	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/bcrypt"
 	"math/rand"
+	"time"
 )
 
-func LoginHandler(email, password string) (string, error) {
+func LoginHandler(email, password string) (string,string, error) {
 	// 1. Fetch user from DB
 	user, err := services.GetUserByEmail(email)
 
 	if err != nil {
 		log.Error("Error getting user by email: "+err.Error(), " ", email)
-		return "", fmt.Errorf("user not found")
+		return "","", fmt.Errorf("user not found")
 	}
 
 	// 2. Compare hashed password
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		return "", fmt.Errorf("incorrect password")
+		return "", "",fmt.Errorf("incorrect password")
 	}
 
 	// 3. Generate Token
-	token, err := utils.GenerateToken(user.Id)
+	accessToken, refreshToken, err := utils.GenerateTokens(user.Id)
 	if err != nil {
-		log.Error("Error generating token ", user.Id, " ", err)
-		return "", fmt.Errorf("failed to generate token")
+		return "","", fmt.Errorf("failed to generate tokens")
 	}
 
-	return token, nil
+	expiresAt := time.Now().Add(constants.REFRESH_TOKEN_EXPIRY_TIME)
+	err = sql.SaveUserSession(user.Id, refreshToken, expiresAt)
+	if err != nil {
+		log.Error("Session save error: ", err)
+		return "","", fmt.Errorf("failed to create session")
+	}
+
+	return accessToken,refreshToken, nil
 }
 
 // ForgotPasswordHandler sends OTP if user exists
