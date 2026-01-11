@@ -7,8 +7,8 @@ type LoginRequest struct {
 
 // SignupRequest is used for the initial email/password submission
 type SignupRequest struct {
-	Email           string `json:"email" validate:"required,email"`
-	Password        string `json:"password" validate:"required,min=8"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
 	ConfirmPassword string `json:"confirm_password" validate:"required,min=8"`
 }
 
@@ -25,9 +25,9 @@ type ForgotPasswordRequest struct {
 
 // ResetPasswordRequest is the final step where the user provides a new password
 type ResetPasswordRequest struct {
-	Email           string `json:"email" validate:"required,email"`
-	NewPassword     string `json:"new_password" validate:"required,min=8"`
-	ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=NewPassword"`
+	Email    string `json:"email"`
+	Password string `json:"new_password"`
+	ConfirmPassword string `json:"confirm_password"`
 }
 
 // ResetIntent helps track if a user has cleared the OTP check

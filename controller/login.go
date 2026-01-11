@@ -126,7 +126,7 @@ func VerifyResetOTPController(c echo.Context) error {
 	pending, err := redis.GetPendingUser(req.Email)
 	if err != nil || pending.OTP != req.OTP {
 		log.Error("VerifyResetOTPController.VerifyResetOTPHandler ", " OTP Mismatch ")
-		return c.JSON(http.StatusBadRequest, models.ResponseModel{
+		return c.JSON(http.StatusUnauthorized, models.ResponseModel{
 			Status:  "UNAUTHORIZED",
 			Message: "Invalid OTP",
 			Code:    http.StatusUnauthorized,
@@ -144,10 +144,7 @@ func VerifyResetOTPController(c echo.Context) error {
 }
 
 func ResetPasswordController(c echo.Context) error {
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
+	var req models.ResetPasswordRequest
 
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, models.ResponseModel{
@@ -161,6 +158,13 @@ func ResetPasswordController(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, models.ResponseModel{
 			Status:  "BAD_REQUEST",
 			Message: "Invalid email format",
+			Code:    http.StatusBadRequest,
+		})
+	}
+	if req.Password != req.ConfirmPassword {
+		return c.JSON(http.StatusBadRequest, models.ResponseModel{
+			Status:  "BAD_REQUEST",
+			Message: "Confirm password does not match",
 			Code:    http.StatusBadRequest,
 		})
 	}
