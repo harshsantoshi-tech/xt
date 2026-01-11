@@ -5,6 +5,7 @@ import (
 	"expense-tracker/constants"
 	"expense-tracker/handlers"
 	"expense-tracker/models"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"net/http"
@@ -53,7 +54,7 @@ func SignupController(c echo.Context) error {
 		log.Error("Failed to send OTP", req.Email, req.Password)
 		return c.JSON(http.StatusInternalServerError, models.ResponseModel{
 			Status:  "INTERNAL_SERVER_ERROR",
-			Message: "Could not send OTP",
+			Message: fmt.Sprintf("Failed to send OTP: %v", err),
 			Code:    http.StatusInternalServerError,
 		})
 	}
