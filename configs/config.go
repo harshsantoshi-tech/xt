@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"time"
 
@@ -53,8 +54,8 @@ func ConnectDB() *sql.DB {
 	}
 
 	// DSN format: user:password@tcp(host:port)/dbname
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&tls=true",
-		dbUser, dbPass, dbHost, dbPort, dbName,
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&loc=%s&tls=true",
+		dbUser, dbPass, dbHost, dbPort, dbName, url.QueryEscape("Asia/Kolkata"),
 	)
 
 	db, err := sql.Open("mysql", dsn)

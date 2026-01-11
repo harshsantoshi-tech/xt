@@ -28,7 +28,6 @@ const GET_CHAT_LIST = `
     ORDER BY r.last_message_at DESC;
 `
 
-
 const GET_CHAT_LIST_PAGINATED = `
     SELECT 
         r.id AS room_id,
@@ -44,7 +43,7 @@ const GET_CHAT_LIST_PAGINATED = `
          AND id > rm.last_read_message_id 
          AND sender_id != ?) AS unread_count,
         u_other.id AS other_user_id,
-        u_other.username AS other_user_name
+        u_other.username AS other_user_name,
     u_other.last_seen_at AS other_last_seen
     FROM rooms r
     JOIN room_members rm ON r.id = rm.room_id

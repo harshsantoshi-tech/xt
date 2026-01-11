@@ -1,11 +1,13 @@
 package middlewares
 
 import (
+	"errors"
 	"expense-tracker/constants"
 	"expense-tracker/models"
 	"expense-tracker/services"
 	"expense-tracker/services/redis"
 	"fmt"
+	redis2 "github.com/go-redis/redis/v8"
 	"github.com/labstack/gommon/log"
 	"net/http"
 	"os"
@@ -35,7 +37,7 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		userLoggedOut, err := redis.GetRedis(fmt.Sprintf(redis.USER_LOGOUT, tokenString))
 
-		if err != nil || userLoggedOut == "true" {
+		if (err != nil && !errors.Is(err, redis2.Nil)) || userLoggedOut == "true" {
 			return c.JSON(http.StatusUnauthorized, models.ResponseModel{
 				Status:  constants.UNAUTHORIZED,
 				Message: "Token has been invalidated. Please login again.",

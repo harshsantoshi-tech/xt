@@ -35,6 +35,7 @@ func InitRoutes(e *echo.Echo) {
 	api.Use(middlewares.AuthMiddleware)
 	{
 		api.GET("/ws", controller.WsController)
+		api.POST("/create-room", controller.CreateRoomController)
 		api.POST("/logout", controller.LogoutController)
 	}
 }

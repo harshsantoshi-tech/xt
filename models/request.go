@@ -35,3 +35,12 @@ type ResetIntent struct {
 	Email      string `json:"email"`
 	IsVerified bool   `json:"is_verified"`
 }
+
+
+//Rooms
+type CreateRoomRequest struct {
+	Name    string  `json:"name"`
+	UserId  int64  `json:"user_id"`
+	IsGroup bool    `json:"is_group"`
+	Members []int64 `json:"members"` // List of user IDs
+}
