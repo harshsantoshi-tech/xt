@@ -40,6 +40,7 @@ func SignupController(c echo.Context) error {
 		})
 	}
 	if !isValidEmail(req.Email) {
+		log.Error("Invalid email", req.Email)
 		return c.JSON(http.StatusBadRequest, models.ResponseModel{
 			Status:  "BAD_REQUEST",
 			Message: "Invalid email format",
@@ -49,6 +50,7 @@ func SignupController(c echo.Context) error {
 
 	err = handlers.SendOTPHandler(req.Email, req.Password)
 	if err != nil {
+		log.Error("Failed to send OTP", req.Email, req.Password)
 		return c.JSON(http.StatusInternalServerError, models.ResponseModel{
 			Status:  "INTERNAL_SERVER_ERROR",
 			Message: "Could not send OTP",

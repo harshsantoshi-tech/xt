@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"github.com/labstack/gommon/log"
 	"net/smtp"
 	"os"
 )
@@ -35,8 +36,10 @@ func SendEmail(toEmail string, otp string, reason string) error {
 
 	// 4. Send the email
 	address := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
+	log.Info("Sending Email", toEmail)
 	err := smtp.SendMail(address, auth, from, []string{toEmail}, message)
 	if err != nil {
+		log.Error("Failed to send email", toEmail)
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
