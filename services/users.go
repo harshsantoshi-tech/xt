@@ -23,10 +23,10 @@ func GetUserByEmail(email string) (*models.User, error) {
 	)
 
 	if err != nil {
-		log.Error("GetUserByEmail ", err.Error())
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
+		log.Error("GetUserByEmail Scan error: ", err.Error())
 		return nil, err
 	}
 
