@@ -34,17 +34,17 @@ const GET_CHAT_LIST_PAGINATED = `
         r.name AS room_name,
         r.is_group,
         r.last_message_at,
-        m.content AS last_message,
-        m.message_type,
-        m.sender_id AS last_sender_id,
-        (SELECT username FROM users WHERE id = m.sender_id) AS last_sender_name,
+        COALESCE(m.content, '') AS last_message,            -- Handle NULL content
+        COALESCE(m.message_type, 'text') AS message_type,   -- Handle NULL type
+        COALESCE(m.sender_id, 0) AS last_sender_id,        -- FIX: Handle NULL sender_id
+        COALESCE((SELECT username FROM users WHERE id = m.sender_id), '') AS last_sender_name,
         (SELECT COUNT(*) FROM messages 
          WHERE room_id = r.id 
          AND id > rm.last_read_message_id 
          AND sender_id != ?) AS unread_count,
         u_other.id AS other_user_id,
         u_other.username AS other_user_name,
-    u_other.last_seen_at AS other_last_seen
+        u_other.last_seen_at AS other_last_seen
     FROM rooms r
     JOIN room_members rm ON r.id = rm.room_id
     LEFT JOIN room_members rm_other ON rm_other.room_id = r.id AND rm_other.user_id != rm.user_id AND r.is_group = 0
