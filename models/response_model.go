@@ -11,3 +11,8 @@ type LoginResponse struct {
 	AccessToken string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
+
+type RoomCreatedResponse struct {
+	ResponseModel
+	RoomID int64 `json:"room_id"`
+}

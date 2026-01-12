@@ -17,7 +17,7 @@ import (
 )
 
 func LoginHandler(email, password string) (string, string, error) {
-	// 1. Fetch user from DB
+	//Fetch user from DB
 	user, err := services.GetUserByEmail(email)
 
 	if err != nil {
@@ -25,13 +25,13 @@ func LoginHandler(email, password string) (string, string, error) {
 		return "", "", fmt.Errorf("user not found")
 	}
 
-	// 2. Compare hashed password
+	//Compare hashed password
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
 		return "", "", fmt.Errorf("incorrect password")
 	}
 
-	// 3. Generate Token
+	//Generate Token
 	accessToken, refreshToken, err := utils.GenerateTokens(user.Id)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate tokens")

@@ -30,17 +30,11 @@ type ResetPasswordRequest struct {
 	ConfirmPassword string `json:"confirm_password"`
 }
 
-// ResetIntent helps track if a user has cleared the OTP check
-type ResetIntent struct {
-	Email      string `json:"email"`
-	IsVerified bool   `json:"is_verified"`
-}
-
 
 //Rooms
 type CreateRoomRequest struct {
-	Name    string  `json:"name"`
-	UserId  int64  `json:"user_id"`
+	Name    string  `json:"name,omitempty"` // Nullable for 1-on-1
 	IsGroup bool    `json:"is_group"`
-	Members []int64 `json:"members"` // List of user IDs
+	Members []int64 `json:"members"`
+	UserId  int64   `json:"-"`
 }

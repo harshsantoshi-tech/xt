@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"errors"
+	"expense-tracker/constants"
 	"expense-tracker/models"
 	"expense-tracker/services"
 	"expense-tracker/services/redis"
 	"expense-tracker/services/sql"
 	"fmt"
+	redis2 "github.com/go-redis/redis/v8"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"math/rand"
@@ -47,7 +49,7 @@ func VerifySignupHandler(email string, otp string) *models.AppError {
 	// 1. Check Redis
 	pending, err := redis.GetPendingUser(email)
 	if err != nil {
-		if err.Error() == "redis: nil" {
+		if errors.Is(err, redis2.Nil){
 			return models.Unauthorized("OTP expired, please try again")
 		}
 		return models.InternalError("Redis connection failed")
@@ -60,7 +62,7 @@ func VerifySignupHandler(email string, otp string) *models.AppError {
 	}
 
 	// 3. Update Database
-	err = sql.UpdateUserStatus(email, "offline")
+	err = sql.UpdateUserStatus(email, constants.ONLINE)
 	if err != nil {
 		return models.InternalError("Database update failed")
 	}

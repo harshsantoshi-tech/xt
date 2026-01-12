@@ -5,6 +5,8 @@ import (
 	"errors"
 	"expense-tracker/configs"
 	"expense-tracker/models"
+	"fmt"
+	"github.com/labstack/gommon/log"
 	"time"
 )
 
@@ -19,7 +21,7 @@ func UpsertUser(email , hashedPassword string)error{
 		}
 		// If they are pending, update their password (in case they changed it on retry)
 		_, err = configs.AppConfig.DB.Exec(
-			"UPDATE users SET password_hash = ?, created_at = ? WHERE email = ? AND status = 'pending'",
+			"UPDATE users SET password_hash = ?, updated_at = ? WHERE email = ? AND status = 'pending'",
 			string(hashedPassword), time.Now(), email,
 		)
 	} else if errors.Is(err, sql.ErrNoRows) {
@@ -36,10 +38,11 @@ func UpsertUser(email , hashedPassword string)error{
 
 func UpdateUserStatus(email string, status string)error{
 
-	query := "UPDATE users SET status = ? WHERE email = ? AND status = 'pending'"
-	result, err := configs.AppConfig.DB.Exec(query,status, email)
+	query := "UPDATE users SET status = ? , last_seen_at = ? WHERE email = ? AND status = 'pending'"
+	result, err := configs.AppConfig.DB.Exec(query,status,time.Now(), email)
 
 	if err != nil {
+		log.Error("UpdateUserStatus.Exec err: %v", err)
 		return err
 	}
 
@@ -52,13 +55,9 @@ func UpdateUserStatus(email string, status string)error{
 
 func UpdateUserOnlineStatus(userID int64, status string) error {
 	var query string
-	if status == "offline" {
-		query = `UPDATE users SET status = ?, last_seen_at = CURRENT_TIMESTAMP WHERE id = ?`
-	} else {
-		query = `UPDATE users SET status = ? WHERE id = ?`
-	}
+	query = `UPDATE users SET status = ?, last_seen_at = ? WHERE id = ?`
 
-	_, err := configs.AppConfig.DB.Exec(query, status, userID)
+	_, err := configs.AppConfig.DB.Exec(query, status,time.Now(), userID)
 	return err
 }
 
@@ -66,39 +65,44 @@ func GetChatListPayload(currentUserID int64, limit int, offset int) ([]models.Ch
 
 	rows, err := configs.AppConfig.DB.Query(GET_CHAT_LIST_PAGINATED, currentUserID, currentUserID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query error: %w", err)
 	}
 	defer rows.Close()
 
 	var chatList []models.ChatListItem
 	for rows.Next() {
 		var item models.ChatListItem
-		var otherID sql.NullInt64
-		var otherName, roomName, lastMsg, lastMsgType, lastSenderName sql.NullString
-		var otherLastSeenAt time.Time
+
+		var lastMsgAt, otherSeenAt time.Time
 
 		err := rows.Scan(
-			&item.RoomID, &roomName, &item.IsGroup, &item.LastMessageAt,
-			&lastMsg, &lastMsgType, &item.LastSenderID, &lastSenderName,
-			&item.UnreadCount, &otherID, &otherName,&otherLastSeenAt,
+			&item.RoomID,
+			&item.RoomName,
+			&item.IsGroup,
+			&lastMsgAt,
+			&item.LastMessage,
+			&item.MessageType,
+			&item.LastSenderID,
+			&item.LastSenderName,
+			&item.UnreadCount,
+			&item.OtherUserID,
+			&item.OtherUserName,
+			&otherSeenAt,
 		)
 		if err != nil {
+			log.Printf("Scan error: %v", err)
 			continue
 		}
 
-		if roomName.Valid { item.RoomName = &roomName.String }
-		item.LastMessage = lastMsg.String
-		item.MessageType = lastMsgType.String
-		item.LastSenderName = lastSenderName.String
+		item.LastMessageAt = lastMsgAt
 
-		if !item.IsGroup && otherID.Valid {
-			item.OtherUserID = otherID.Int64
-			item.OtherUserName = otherName.String
-			item.OtherLastSeenAt = otherLastSeenAt
+		if !item.IsGroup && !otherSeenAt.IsZero() {
+			item.OtherLastSeenAt = &otherSeenAt
 		}
 
 		chatList = append(chatList, item)
 	}
+
 	return chatList, nil
 }
 
@@ -117,8 +121,8 @@ func SaveMessage(roomID int64, senderID int64, content string, msgType string) (
 
 	id, _ := res.LastInsertId()
 
-	updateRoom := `UPDATE rooms SET last_message_at = CURRENT_TIMESTAMP WHERE id = ?`
-	if _, err := tx.Exec(updateRoom, roomID); err != nil {
+	updateRoom := `UPDATE rooms SET last_message_at = ? WHERE id = ?`
+	if _, err := tx.Exec(updateRoom,time.Now(), roomID); err != nil {
 		tx.Rollback()
 		return models.ChatMessage{}, err
 	}

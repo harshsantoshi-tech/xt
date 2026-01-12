@@ -24,21 +24,21 @@ type ChatMessage struct {
 }
 
 type ChatListItem struct {
-	RoomID        int64     `json:"room_id"`
-	RoomName      *string   `json:"room_name"` // Pointer because it can be null for 1-on-1
-	IsGroup       bool      `json:"is_group"`
-	LastMessage   string    `json:"last_message"`
-	MessageType   string    `json:"message_type"`
-	LastSenderID  int64     `json:"last_sender_id"`
-	LastSenderName string   `json:"last_sender_name"`
-	LastMessageAt time.Time `json:"last_message_at"`
-	UnreadCount   int       `json:"unread_count"`
+	RoomID         int64     `json:"room_id"`
+	RoomName       *string   `json:"room_name,omitempty"`
+	IsGroup        bool      `json:"is_group"`
+	LastMessage    *string   `json:"last_message,omitempty"`
+	MessageType    *string   `json:"message_type,omitempty"`
+	LastSenderID   int64     `json:"last_sender_id,omitempty"`
+	LastSenderName *string   `json:"last_sender_name,omitempty"`
+	LastMessageAt  time.Time `json:"last_message_at"`
+	UnreadCount    int       `json:"unread_count"`
 
-	// Dynamic field for 1-on-1 chats
-	OtherUserName string    `json:"other_user_name,omitempty"`
-	OtherUserID   int64     `json:"other_user_id,omitempty"`
-	OtherUserAvatar string `json:"other_user_avatar,omitempty"`
-	OtherLastSeenAt time.Time `json:"other_last_seen_at,omitempty"`
+	// Fields for 1-on-1 chats only
+	OtherUserName   *string    `json:"other_user_name,omitempty"`
+	OtherUserID     *int64     `json:"other_user_id,omitempty"`
+	OtherUserAvatar *string    `json:"other_user_avatar,omitempty"`
+	OtherLastSeenAt *time.Time `json:"other_last_seen_at,omitempty"`
 }
 // ChatResponse is the top-level envelope
 type ChatResponse struct {
@@ -66,10 +66,8 @@ type ChatEntry struct {
 
 type Contact struct {
 	ID        int    `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	FullName  string `json:"full_name"`
-	Phone     string `json:"phone"`
+	UserName  string `json:"user_name"`
+	Email     string `json:"email"`
 }
 
 type Assignment struct {
@@ -101,15 +99,25 @@ type MessageResponse struct {
 	Payload interface{} `json:"payload"`
 }
 
-type SendMessagePayload struct {
-	ChatID  int64  `json:"chat_id"`
-	Message string `json:"message"`
+
+//request
+type Pagination struct {
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
+}
+
+type SendMessagesPayload  struct {
+	RoomID  int64  `json:"room_id"`
+	Content string `json:"content"`
+	Type    string `json:"type"`
 }
 
 type TypingPayload struct {
-	ChatID int64 `json:"chat_id"`
+	RoomID   int64 `json:"room_id"`
+	IsTyping bool  `json:"is_typing"`
 }
 
 type ReadReceiptPayload struct {
-	MessageID int64 `json:"message_id"`
+	RoomID        int64 `json:"room_id"`
+	LastMessageID int64 `json:"last_message_id"`
 }

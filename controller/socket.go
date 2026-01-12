@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"expense-tracker/constants"
 	"expense-tracker/handlers"
 	"expense-tracker/services"
 	"github.com/gorilla/websocket"
@@ -27,7 +28,7 @@ func WsController(c echo.Context) error {
 	}
 
 	services.Hub.Register(client)
-	go services.BroadcastUserStatus(client.UserID,"online")
+	go services.BroadcastUserStatus(client.UserID,constants.ONLINE)
 	// Start concurrent workers
 	go handlers.WritePump(client)
 	handlers.ReadPump(client)

@@ -19,12 +19,11 @@ import (
 
 // Simple regex email validation
 func isValidEmail(email string) bool {
-	//regex := `^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$`
+
 	var emailRegex = regexp.MustCompile(`(?i)^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$`)
 	email = strings.TrimSpace(email)
 	return emailRegex.MatchString(email)
-	//re := regexp.MustCompile(regex)
-	//return re.MatchString(email)
+
 }
 
 func LoginController(c echo.Context) error {
@@ -72,9 +71,9 @@ func LoginController(c echo.Context) error {
 }
 
 func ForgotPasswordController(c echo.Context) error {
-	var req struct {
-		Email string `json:"email"`
-	}
+
+	var req models.ForgotPasswordRequest
+
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, models.ResponseModel{
 			Status:  "BAD_REQUEST",

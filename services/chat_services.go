@@ -11,10 +11,7 @@ import (
 
 func GetChatList(userId int64, payload json.RawMessage) (models.ChatResponse, error) {
 
-	var pagination struct {
-		Limit  int `json:"limit"`
-		Offset int `json:"offset"`
-	}
+	var pagination models.Pagination
 	err := json.Unmarshal(payload, &pagination)
 	if err != nil {
 		return models.ChatResponse{}, err
@@ -38,11 +35,7 @@ func GetChatList(userId int64, payload json.RawMessage) (models.ChatResponse, er
 }
 
 func HandleSendMessage(client *Client, payload json.RawMessage) (models.ChatMessage, error) {
-	var req struct {
-		RoomID  int64  `json:"room_id"`
-		Content string `json:"content"`
-		Type    string `json:"type"`
-	}
+	var req models.SendMessagesPayload
 
 	if err := json.Unmarshal(payload, &req); err != nil {
 		log.Print("Error unmarshaling send_message req:", err)
@@ -81,10 +74,7 @@ func HandleSendMessage(client *Client, payload json.RawMessage) (models.ChatMess
 }
 
 func HandleTypingEvent(client *Client, payload json.RawMessage) error {
-	var req struct {
-		RoomID   int64 `json:"room_id"`
-		IsTyping bool  `json:"is_typing"`
-	}
+	var req models.TypingPayload
 
 	if err := json.Unmarshal(payload, &req); err != nil {
 		return err
@@ -117,15 +107,14 @@ func HandleTypingEvent(client *Client, payload json.RawMessage) error {
 
 func BroadcastUserStatus(userID int64, status string) {
 
-	_ = sql.UpdateUserOnlineStatus(userID, status)
+	go sql.UpdateUserOnlineStatus(userID, status)
 
 	event := models.SocketEvent{
 		Type:    "user_status",
 		Payload: nil,
 	}
 
-	query := `
-        SELECT DISTINCT user_id FROM room_members 
+	query := ` SELECT DISTINCT user_id FROM room_members 
         WHERE room_id IN (SELECT room_id FROM room_members WHERE user_id = ?)
         AND user_id != ?`
 
@@ -150,10 +139,7 @@ func BroadcastUserStatus(userID int64, status string) {
 }
 
 func HandleReadReceipt(client *Client, payload json.RawMessage) error {
-	var req struct {
-		RoomID        int64 `json:"room_id"`
-		LastMessageID int64 `json:"last_message_id"`
-	}
+	var req models.ReadReceiptPayload
 
 	if err := json.Unmarshal(payload, &req); err != nil {
 		return err

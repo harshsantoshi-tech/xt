@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"expense-tracker/constants"
 	"expense-tracker/models"
 	"expense-tracker/services"
 	"github.com/labstack/echo/v4"
@@ -27,7 +28,7 @@ func WritePump(client *services.Client) {
 // ReadPump handles receiving messages FROM the Flutter client TO the server
 func ReadPump(client *services.Client) {
 	defer func() {
-		services.BroadcastUserStatus(client.UserID,"offline")
+		services.BroadcastUserStatus(client.UserID,constants.OFFLINE)
 		services.Hub.Unregister(client.UserID)
 		client.Conn.Close()
 	}()
@@ -40,7 +41,8 @@ func ReadPump(client *services.Client) {
 		}
 
 		var event models.SocketEvent
-		if err := json.Unmarshal(message, &event); err != nil {
+		if err = json.Unmarshal(message, &event); err != nil {
+			log.Error("Error unmarshalling message ",message)
 			continue
 		}
 

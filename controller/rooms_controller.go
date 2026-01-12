@@ -2,6 +2,7 @@ package controller
 
 import (
 	"expense-tracker/configs"
+	"expense-tracker/constants"
 	"expense-tracker/models"
 	"expense-tracker/services"
 	"fmt"
@@ -34,7 +35,7 @@ func CreateRoomController(c echo.Context) error {
 		uniqueMembers = append(uniqueMembers, id)
 	}
 
-	if len(uniqueMembers) == 0  || len(uniqueMembers) == 1 {
+	if len(uniqueMembers) <= 1 {
 		return c.JSON(http.StatusBadRequest, models.ResponseModel{
 			Status: "BAD_REQUEST",
 			Message: "Invalid request as unique members are less than 2",
@@ -46,12 +47,7 @@ func CreateRoomController(c echo.Context) error {
 		req.Name = ""
 	}
 
-	roomID, existed, err := services.HandleCreateRoom(
-		configs.AppConfig.DB,
-		req.Name,
-		req.IsGroup,
-		uniqueMembers,
-	)
+	roomID, existed, err := services.HandleCreateRoom(configs.AppConfig.DB, req.Name, req.IsGroup, uniqueMembers, )
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, models.ResponseModel{
@@ -68,8 +64,12 @@ func CreateRoomController(c echo.Context) error {
 		msg = "Room already exists"
 	}
 
-	return c.JSON(status, map[string]interface{}{
-		"message": msg,
-		"room_id": roomID,
-	})
+	var response models.RoomCreatedResponse
+	response.ResponseModel = models.ResponseModel{
+		Status:  constants.SUCCESS,
+		Message: msg,
+		Code:    status,
+	}
+	response.RoomID = roomID
+	return c.JSON(status, response)
 }
