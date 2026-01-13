@@ -1,7 +1,9 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/labstack/gommon/log"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"os"
@@ -86,10 +88,12 @@ func SendEmail(toEmail, otp, reason string) error {
 	)
 
 	client := sendgrid.NewSendClient(apiKey)
-	_, err := client.Send(message)
+	res, err := client.Send(message)
 	if err != nil {
 		return fmt.Errorf("failed to send email: %w", err)
 	}
+	resJson, _ := json.Marshal(res)
+	log.Printf("Email sent successfully ", string(resJson))
 
 	return nil
 }
