@@ -2,8 +2,8 @@ package services
 
 import (
 	"fmt"
-	"github.com/resend/resend-go/v2"
-	"log"
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"os"
 )
 
@@ -47,30 +47,49 @@ import (
 //	return nil
 //}
 
-func SendEmail(toEmail string, otp string, reason string) error {
-
+func SendEmail(toEmail, otp, reason string) error {
 	apiKey := os.Getenv("SENDGRID_API_KEY")
-	client := resend.NewClient(apiKey)
-	htmlBody := fmt.Sprintf(`
-       <html>
-           <body style="font-family: Arial, sans-serif; text-align: center;">
-               <h2>Welcome to Expense Tracker!</h2>
-               <p>Please use the following One-Time Password (OTP) %s</p>
-               <h1 style="color: #4A90E2; letter-spacing: 5px;">%s</h1>
-               <p>This code is valid for 5 minutes. If you did not request this, please ignore this email.</p>
-           </body>
-       </html>`, reason, otp)
-	params := &resend.SendEmailRequest{
-		From:    "onboarding@resend.dev",
-		To:      []string{toEmail},
-		Subject: "Hello World",
-		Html:    htmlBody,
+	if apiKey == "" {
+		return fmt.Errorf("SENDGRID_API_KEY not set")
 	}
 
-	sent, err := client.Emails.Send(params)
+	from := mail.NewEmail("Chat app", "harsh.santoshi07@gmail.com")
+
+	to := mail.NewEmail("", toEmail)
+
+	subject := "Your OTP for Chat app"
+
+	plainText := fmt.Sprintf(
+		"Your OTP for %s is %s. This code is valid for 5 minutes. If you did not request this, please ignore this email.",
+		reason,
+		otp,
+	)
+
+	htmlBody := fmt.Sprintf(`
+	<html>
+		<body style="font-family: Arial, sans-serif; text-align: center;">
+			<h2>Expense Tracker</h2>
+			<p>Your OTP for <strong>%s</strong> is:</p>
+			<h1 style="color: #4A90E2; letter-spacing: 5px;">%s</h1>
+			<p>This code is valid for 5 minutes.</p>
+			<p>If you did not request this, please ignore this email.</p>
+		</body>
+	</html>
+	`, reason, otp)
+
+	message := mail.NewSingleEmail(
+		from,
+		subject,
+		to,
+		plainText,
+		htmlBody,
+	)
+
+	client := sendgrid.NewSendClient(apiKey)
+	_, err := client.Send(message)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to send email: %w", err)
 	}
-	log.Println(sent)
+
 	return nil
 }
