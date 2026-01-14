@@ -93,7 +93,7 @@ func SendEmail(toEmail, otp, reason string) error {
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 	resJson, _ := json.Marshal(res)
-	log.Printf("Email sent successfully ", string(resJson))
+	log.Printf("Email sent successfully %s", string(resJson))
 
 	return nil
 }
