@@ -19,7 +19,7 @@ func SavePendingUser(email string, pending models.PendingUser) error {
 	}
 
 	key := fmt.Sprintf(PENDING_USER, email)
-	return configs.AppConfig.Redis.Set(ctx, key, data, 5*time.Minute).Err()
+	return configs.AppConfig.Redis.Set(ctx, key, data, 15*time.Minute).Err()
 }
 
 // GetPendingUser retrieves the temporary signup data
