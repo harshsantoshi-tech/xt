@@ -18,7 +18,7 @@ import (
 func SendOTPHandler(email string, password string) error {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
-	err := sql.UpsertUser(email , string(hashedPassword))
+	err := sql.UpsertUser(email, string(hashedPassword))
 	if err != nil {
 		return fmt.Errorf("database operation failed: %v", err)
 	}
@@ -35,7 +35,7 @@ func SendOTPHandler(email string, password string) error {
 	}
 
 	go func() {
-		err :=  services.SendEmail(email, otp, "to complete your registration:")
+		err := services.SendEmail(email, otp, "to complete your registration:")
 		if err != nil {
 			fmt.Println("Async Email Error:", err)
 		}
@@ -49,14 +49,13 @@ func VerifySignupHandler(email string, otp string) *models.AppError {
 	// 1. Check Redis
 	pending, err := redis.GetPendingUser(email)
 	if err != nil {
-		if errors.Is(err, redis2.Nil){
+		if errors.Is(err, redis2.Nil) {
 			return models.Unauthorized("OTP expired, please try again")
 		}
 		return models.InternalError("Redis connection failed")
 	}
 
 	// 2. Check OTP
-	pending.OTP = "123456"
 	if pending.OTP != otp {
 		return models.Unauthorized("OTP verification failed")
 	}

@@ -57,7 +57,6 @@ func ForgotPasswordHandler(email string) error {
 	}
 
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
-	otp = "123456"
 
 	pending := models.PendingUser{OTP: otp}
 	err = redis.SavePendingUser(email, pending)
